@@ -162,10 +162,10 @@ int alter_mes(int *fd,struct cli_users *user)
 
 	printf("请输入您的年龄:");
 	scanf("%d",&user->age);
-	
+
 	printf("请输入你的电话:");
 	scanf("%d",&user->phone);
-	
+
 	//个人信息发送服务器
 	user->opt = USERADD;
 	do{
@@ -217,10 +217,11 @@ int account_enter(int *fd,struct cli_users *user)
 	int ret = 0;
 	char flag;
 	while(1){
+		memset(user,0,sizeof(*user));
 		user->opt = ENTER;
-		printf("请输入您的帐号:");
+		printf("请输入您的数字帐号:");
 		scanf("%d",&user->account);
-		printf("请输入您的密码:");
+		printf("请输入您的数字密码:");
 		scanf("%d",&user->code);
 
 		//帐号密码信息发送服务器
@@ -232,7 +233,6 @@ int account_enter(int *fd,struct cli_users *user)
 			close(*fd);
 			return -1;
 		}
-
 		//接收服务器反馈信息
 		do{
 			ret = recv(*fd,user,sizeof(*user),0);
@@ -244,7 +244,6 @@ int account_enter(int *fd,struct cli_users *user)
 		}
 
 		//查看帐号密码是否正确
-		printf("%d\n",user->opt);
 		if(user->opt != ENTERWIN){
 			printf("帐号或密码错误,重试输入r, 输入q退出\n");
 			getchar();
@@ -289,16 +288,21 @@ int operation_root(int *fd,struct cli_users *user)
 	scanf("%d",&flags);
 
 
-switch(flags){
+	switch(flags){
 	case 1://查询用户信息
 		user->opt = ROOT;
-		
+
 		printf("请输入要查询用户的帐号:");
 		scanf("%d",&user->account);
-		
+
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
 		
+		if(user->opt == ERR){
+			printf("查询信息失败，帐号不存在\n");
+			break;
+		}
+
 		printf("该用户的姓名：%s\n",user->name);
 		printf("该用户的年龄：%d\n",user->age);
 		printf("该用户的电话：%d\n",user->phone);
@@ -311,26 +315,27 @@ switch(flags){
 		break;
 
 	case 2://修改用户信息
-		//alter_mes(fd,user);
 		user->opt = ROOTALT;
-	
+
 		printf("请输入要修改用户的帐号:");
 		scanf("%d",&user->account);
-	
+
 		printf("请输入该用户的薪资:");
 		scanf("%d",&user->salary);
-		
+
 		printf("请输入该用户的部门:");
 		scanf("%s",department);
 		for(i = 0; department[i]; i++){
 			user->department[i] = department[i];
 		}
 		user->department[i] = department[i];
-		
+
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
 		if(user->opt == ROOTALTWIN){
 			printf("修改信息成功\n");
+		}else{
+			printf("修改信息失败，帐号不存在\n");	
 		}
 		break;
 
@@ -338,16 +343,18 @@ switch(flags){
 		user->opt = ROOTDEL;
 		printf("请输入要删除用户的帐号:");
 		scanf("%d",&user->account);
-	
+
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
 		if(user->opt == ALTERCODEWIN){
 			printf("删除用户信息成功\n");
+		}else{
+		printf("删除用户失败，用户不存在\n");
 		}
 		break;
 
 	case 4://退出
-		return 0;
+		return -1;
 
 	default:
 		printf("输入错误，请重新输入\n");
@@ -363,7 +370,7 @@ int operation_user(int *fd,struct cli_users *user)
 	 *   
 	 *   函数名称：operation_user
 	 *   函数作用: 用户帐号操作模式
-	 *   返回值  ：0 退出
+	 *   返回值  ：-1 退出  0正常结束
 	 *   创 建 者：HuYehui
 	 *
 	 ================================================================*/
@@ -377,10 +384,10 @@ int operation_user(int *fd,struct cli_users *user)
 	switch(flags){
 	case 1://查询个人信息
 		user->opt = LOOKMES;
-	
+
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
-	
+
 		printf("您的姓名：%s\n",user->name);
 		printf("您的年龄：%d\n",user->age);
 		printf("您的电话：%d\n",user->phone);
@@ -391,35 +398,21 @@ int operation_user(int *fd,struct cli_users *user)
 		break;
 
 	case 2://修改个人信息
-		//alter_mes(fd,user);
-		user->opt = ALTERMES;
-		
-		printf("请输入您的姓名:");
-		scanf("%s",user->name);
-		
-		printf("请输入您的年龄:");
-		scanf("%d",&user->age);
-		
-		send(*fd,user,sizeof(*user),0);
-		recv(*fd,user,sizeof(*user),0);
-		
-		if(user->opt == ALTERMESWIN){
-			printf("修改信息成功\n");
-		}
+		alter_mes(fd,user);		
 		break;
 
 	case 3://修改密码
 		user->opt = ALTERCODE;
-	
+
 		printf("请输入原密码\n");
 		getchar();
 		scanf("%d",&code);
-		
+
 		if(code != user->code){
 			printf("密码错误\n");
 			break;
 		}
-		
+
 		printf("请输入新密码\n");
 		getchar();
 		scanf("%d",&code);
@@ -431,15 +424,16 @@ int operation_user(int *fd,struct cli_users *user)
 		if(user->opt == ALTERCODEWIN){
 			printf("修改密码成功，请重新登录\n");
 		}
-		return 0;
+		return -1;
 
 	case 4://退出
-		return 0;
+		return -1;
 
 	default:
 		printf("输入错误，请重新输入\n");
 		break;
 	}
+	return 0;
 }
 
 int operation(int *fd,struct cli_users *user)
@@ -448,22 +442,24 @@ int operation(int *fd,struct cli_users *user)
 	 *   
 	 *   函数名称：operation
 	 *   函数作用：登录成功，操作函数
-	 *   返回值  ：0 退出
+	 *   返回值  ：0退出
 	 *   创 建 者：HuYehui
 	 *
 	 ================================================================*/
 	int ret = 0;
+	int save_account = 0;
 	while(1){
 		if(user->account == 777){
+			save_account = user->account;
 			ret = operation_root(fd,user);
-			if(ret == 0){
-			return 0;
+			if(ret == -1){
+				break;
 			}
-			
+			user->account= save_account;
 		}else{
 			ret = operation_user(fd,user);
-			if(ret == 0){
-				return 0;
+			if(ret == -1){
+				break;
 			}	
 		}
 	}

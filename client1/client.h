@@ -13,7 +13,7 @@
 #include <string.h>    
 
 
-#define SERV_IP   "192.168.0.104"
+#define SERV_IP   "192.168.43.185"
 #define SERV_PORT 6666
 #define DATABASE "users.db"
 
