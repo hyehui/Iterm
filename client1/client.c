@@ -316,10 +316,10 @@ int operation_root(int *fd,struct cli_users *user)
 
 	case 2://修改用户信息
 		user->opt = ROOTALT;
-
+		
 		printf("请输入要修改用户的帐号:");
 		scanf("%d",&user->account);
-
+		 
 		printf("请输入该用户的薪资:");
 		scanf("%d",&user->salary);
 
@@ -329,7 +329,6 @@ int operation_root(int *fd,struct cli_users *user)
 			user->department[i] = department[i];
 		}
 		user->department[i] = department[i];
-
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
 		if(user->opt == ROOTALTWIN){
@@ -343,10 +342,10 @@ int operation_root(int *fd,struct cli_users *user)
 		user->opt = ROOTDEL;
 		printf("请输入要删除用户的帐号:");
 		scanf("%d",&user->account);
-
 		send(*fd,user,sizeof(*user),0);
 		recv(*fd,user,sizeof(*user),0);
-		if(user->opt == ALTERCODEWIN){
+		printf("%d\n",user->opt);
+		if(user->opt == ROOTDELWIN){
 			printf("删除用户信息成功\n");
 		}else{
 		printf("删除用户失败，用户不存在\n");
